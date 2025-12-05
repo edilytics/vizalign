@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VizAlign - Data Alignment & Visualization</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>VizAlign</h1>
+        <p>DNA Sequence Alignment Visualization</p>
+    </header>
+
+    <main>
+        <section id="controls">
+            <h2>DNA Sequences</h2>
+            <div id="sequence-inputs">
+                <div class="sequence-input-group">
+                    <label for="name1">Sequence 1 Name:</label>
+                    <input type="text" id="name1" placeholder="Sequence 1" class="name-input">
+                    <label for="seq1">Sequence 1:</label>
+                    <textarea id="seq1" rows="3" placeholder="Enter DNA sequence (A, T, C, G, or -)"></textarea>
+                </div>
+                <div class="sequence-input-group">
+                    <label for="name2">Sequence 2 Name:</label>
+                    <input type="text" id="name2" placeholder="Sequence 2" class="name-input">
+                    <label for="seq2">Sequence 2:</label>
+                    <textarea id="seq2" rows="3" placeholder="Enter DNA sequence (A, T, C, G, or -)"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <section id="visualization">
+            <div class="viz-header">
+                <h2>Alignment Visualization</h2>
+                <button id="reset-zoom" class="reset-button">Reset Zoom</button>
+            </div>
+            <div id="alignment-container">
+                <!-- DNA alignment will render here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Application scripts -->
+    <script src="js/dna-alignment.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
