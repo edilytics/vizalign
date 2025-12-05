@@ -10,6 +10,13 @@ let dragStartY = 0;
 let dragStartPanX = 0;
 let dragStartPanY = 0;
 
+// Navigation slider state
+let contentWidth = 0;
+let containerWidth = 0;
+let isSliderDragging = false;
+let sliderDragStartX = 0;
+let sliderDragStartPanX = 0;
+
 // URL encoding/decoding functions
 function encodeSequencesToURL(seq1, seq2, name1, name2) {
     const params = new URLSearchParams();
@@ -51,6 +58,48 @@ function applyTransform() {
     if (content) {
         content.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
     }
+    updateNavigationSlider();
+}
+
+// Update the navigation slider position indicator
+function updateNavigationSlider() {
+    const container = document.getElementById('alignment-container');
+    const content = document.getElementById('alignment-content');
+    const sliderViewport = document.getElementById('slider-viewport');
+    const sliderTrack = document.getElementById('slider-track');
+
+    if (!container || !content || !sliderViewport || !sliderTrack) return;
+
+    // Calculate content and container dimensions
+    containerWidth = container.offsetWidth;
+    const contentElement = content.querySelector('.alignment-row');
+    if (!contentElement) return;
+
+    contentWidth = contentElement.scrollWidth * zoomLevel;
+
+    // If content fits entirely, center the indicator
+    if (contentWidth <= containerWidth) {
+        sliderViewport.style.left = '50%';
+        return;
+    }
+
+    // Calculate position as percentage
+    const maxPanX = 0;
+    const minPanX = containerWidth - contentWidth;
+    const panRange = maxPanX - minPanX;
+
+    // Convert panX to percentage (0-100)
+    let percentage;
+    if (panRange !== 0) {
+        percentage = ((maxPanX - panX) / panRange) * 100;
+    } else {
+        percentage = 0;
+    }
+
+    // Clamp percentage
+    percentage = Math.max(0, Math.min(100, percentage));
+
+    sliderViewport.style.left = percentage + '%';
 }
 
 // Reset zoom and pan
@@ -91,6 +140,10 @@ function renderAlignment(seq1, seq2, name1, name2) {
     // Create content wrapper for zoom/pan
     const content = document.createElement('div');
     content.id = 'alignment-content';
+
+    // Add position ruler for sequence 1
+    const ruler1 = createPositionRuler(seq1, label1Text + ' pos:');
+    content.appendChild(ruler1);
 
     // Create row for sequence 1
     const row1 = document.createElement('div');
@@ -138,10 +191,61 @@ function renderAlignment(seq1, seq2, name1, name2) {
     row2.appendChild(bases2);
     content.appendChild(row2);
 
+    // Add position ruler for sequence 2
+    const ruler2 = createPositionRuler(seq2, label2Text + ' pos:');
+    content.appendChild(ruler2);
+
     container.appendChild(content);
 
     // Apply current zoom/pan state
     applyTransform();
+
+    // Update slider after DOM has rendered
+    setTimeout(updateNavigationSlider, 0);
+}
+
+// Create a position ruler row for a specific sequence
+function createPositionRuler(seq, labelText) {
+    const row = document.createElement('div');
+    row.className = 'position-ruler';
+
+    // Add label
+    const label = document.createElement('div');
+    label.className = 'alignment-label position-label';
+    label.textContent = labelText;
+    row.appendChild(label);
+
+    // Create ruler content
+    const rulerContent = document.createElement('div');
+    rulerContent.style.display = 'flex';
+
+    let position = 0;
+    for (let i = 0; i < seq.length; i++) {
+        const posEl = document.createElement('div');
+        posEl.className = 'position-marker';
+
+        const base = seq[i];
+
+        // If it's a gap, show nothing
+        if (base === '-') {
+            // Empty marker for gaps
+        } else {
+            // Show position number every 10 bases (0-indexed)
+            if (position % 10 === 0) {
+                posEl.textContent = position;
+            } else if (position % 5 === 0) {
+                // Show a tick mark at 5s
+                posEl.textContent = '|';
+                posEl.classList.add('tick');
+            }
+            position++;
+        }
+
+        rulerContent.appendChild(posEl);
+    }
+
+    row.appendChild(rulerContent);
+    return row;
 }
 
 // Create a base element with appropriate styling
@@ -180,7 +284,7 @@ function setupZoomPan() {
         const newZoom = zoomLevel * delta;
 
         // Limit zoom range
-        if (newZoom >= 0.5 && newZoom <= 10) {
+        if (newZoom >= 0.2 && newZoom <= 4) {
             zoomLevel = newZoom;
             applyTransform();
         }
@@ -210,6 +314,80 @@ function setupZoomPan() {
     // Reset zoom button
     const resetButton = document.getElementById('reset-zoom');
     resetButton.addEventListener('click', resetZoom);
+}
+
+// Setup navigation slider controls
+function setupNavigationSlider() {
+    const sliderTrack = document.getElementById('slider-track');
+    const sliderViewport = document.getElementById('slider-viewport');
+
+    if (!sliderTrack || !sliderViewport) return;
+
+    // Helper function to set position from percentage
+    function setPanFromPercentage(percentage) {
+        // Clamp percentage
+        percentage = Math.max(0, Math.min(100, percentage));
+
+        const container = document.getElementById('alignment-container');
+        const content = document.getElementById('alignment-content');
+        if (!container || !content) return;
+
+        const contentElement = content.querySelector('.alignment-row');
+        if (!contentElement) return;
+
+        const currentContentWidth = contentElement.scrollWidth * zoomLevel;
+        const currentContainerWidth = container.offsetWidth;
+
+        if (currentContentWidth <= currentContainerWidth) {
+            panX = 0;
+        } else {
+            const maxPanX = 0;
+            const minPanX = currentContainerWidth - currentContentWidth;
+            const panRange = maxPanX - minPanX;
+
+            // Convert percentage to panX value
+            panX = maxPanX - (percentage / 100) * panRange;
+
+            // Clamp panX
+            panX = Math.max(minPanX, Math.min(maxPanX, panX));
+        }
+
+        applyTransform();
+    }
+
+    // Click on track to jump to position
+    sliderTrack.addEventListener('mousedown', function(e) {
+        if (e.target === sliderTrack) {
+            const rect = sliderTrack.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percentage = (clickX / rect.width) * 100;
+
+            setPanFromPercentage(percentage);
+        }
+    });
+
+    // Drag viewport indicator
+    sliderViewport.addEventListener('mousedown', function(e) {
+        e.stopPropagation();
+        isSliderDragging = true;
+        sliderDragStartX = e.clientX;
+        sliderDragStartPanX = panX;
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (isSliderDragging) {
+            const sliderTrack = document.getElementById('slider-track');
+            const rect = sliderTrack.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const percentage = (currentX / rect.width) * 100;
+
+            setPanFromPercentage(percentage);
+        }
+    });
+
+    document.addEventListener('mouseup', function() {
+        isSliderDragging = false;
+    });
 }
 
 // Initialize the DNA alignment tool
@@ -253,6 +431,26 @@ function initDNAAlignment() {
 
     // Setup zoom and pan
     setupZoomPan();
+
+    // Setup navigation slider
+    setupNavigationSlider();
+
+    // Update slider on window resize
+    window.addEventListener('resize', function() {
+        updateNavigationSlider();
+    });
+
+    // Setup collapsible controls section
+    const toggleButton = document.getElementById('toggle-controls');
+    const controlsContent = document.getElementById('sequence-inputs');
+    const sectionHeader = document.querySelector('#controls .section-header');
+
+    if (sectionHeader && toggleButton && controlsContent) {
+        sectionHeader.addEventListener('click', function() {
+            controlsContent.classList.toggle('collapsed');
+            toggleButton.classList.toggle('collapsed');
+        });
+    }
 
     console.log('DNA alignment tool initialized');
 }

@@ -265,9 +265,76 @@ section h2 {
     z-index: 1;
 }
 
+/* Position ruler styles */
+.position-ruler {
+    display: flex;
+    margin-bottom: 2px;
+    align-items: flex-end;
+}
+
+.position-label {
+    font-size: 10px;
+    color: #999;
+    font-weight: normal;
+}
+
+.position-marker {
+    width: 30px;
+    height: 16px;
+    text-align: center;
+    font-size: 9px;
+    color: #999;
+    line-height: 16px;
+    font-family: 'Courier New', monospace;
+    user-select: none;
+}
+
+.position-marker.tick {
+    font-size: 12px;
+    font-weight: bold;
+}
+
 .empty-message {
     text-align: center;
     color: #999;
     padding: 2rem;
     font-style: italic;
+}
+
+/* Navigation Slider */
+#navigation-slider {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f9f9f9;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+#slider-track {
+    position: relative;
+    height: 30px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+#slider-viewport {
+    position: absolute;
+    height: 100%;
+    width: 20px;
+    background: #3498db;
+    border-radius: 4px;
+    cursor: grab;
+    transform: translateX(-50%);
+    transition: background 0.2s;
+}
+
+#slider-viewport:hover {
+    background: #2980b9;
+}
+
+#slider-viewport:active {
+    cursor: grabbing;
+    background: #21618c;
 }
