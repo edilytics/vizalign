@@ -18,12 +18,15 @@ let sliderDragStartX = 0;
 let sliderDragStartPanX = 0;
 
 // URL encoding/decoding functions
-function encodeSequencesToURL(seq1, seq2, name1, name2) {
+function encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff) {
     const params = new URLSearchParams();
     if (seq1) params.set('seq1', seq1);
     if (seq2) params.set('seq2', seq2);
     if (name1) params.set('name1', name1);
     if (name2) params.set('name2', name2);
+    if (sgRNAs) params.set('sgRNAs', sgRNAs);
+    if (cutSite !== undefined && cutSite !== null) params.set('cutSite', cutSite);
+    if (scoreCutoff !== undefined && scoreCutoff !== null) params.set('scoreCutoff', scoreCutoff);
     return params.toString();
 }
 
@@ -34,12 +37,15 @@ function decodeSequencesFromURL() {
         seq1: params.get('seq1') || '',
         seq2: params.get('seq2') || '',
         name1: params.get('name1') || '',
-        name2: params.get('name2') || ''
+        name2: params.get('name2') || '',
+        sgRNAs: params.get('sgRNAs') || '',
+        cutSite: params.get('cutSite') !== null ? parseInt(params.get('cutSite')) : -3,
+        scoreCutoff: params.get('scoreCutoff') !== null ? parseFloat(params.get('scoreCutoff')) : 80
     };
 }
 
-function updateURL(seq1, seq2, name1, name2) {
-    const encoded = encodeSequencesToURL(seq1, seq2, name1, name2);
+function updateURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff) {
+    const encoded = encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff);
     if (encoded) {
         window.location.hash = encoded;
     } else {
@@ -411,13 +417,47 @@ function initDNAAlignment() {
         seq2Input.value = data.seq2;
         name1Input.value = data.name1;
         name2Input.value = data.name2;
+
+        // Populate sgRNA fields if they exist
+        const sgRNAsInput = document.getElementById('sgrnas');
+        const cutSiteInput = document.getElementById('cut-site');
+        const scoreCutoffInput = document.getElementById('score-cutoff');
+
+        if (sgRNAsInput && data.sgRNAs) {
+            sgRNAsInput.value = data.sgRNAs;
+        }
+        if (cutSiteInput) {
+            cutSiteInput.value = data.cutSite;
+        }
+        if (scoreCutoffInput) {
+            scoreCutoffInput.value = data.scoreCutoff;
+        }
+
         renderAlignment(data.seq1, data.seq2, data.name1, data.name2);
+
+        // Perform sgRNA alignment if sgRNAs are provided
+        if (data.sgRNAs && window.performsgRNAAlignment) {
+            performsgRNAAlignment(data.seq1, data.seq2, data.sgRNAs, data.cutSite, data.scoreCutoff);
+        }
     }
 
     // Function to update everything
     function updateAll() {
-        updateURL(seq1Input.value, seq2Input.value, name1Input.value, name2Input.value);
+        const sgRNAsInput = document.getElementById('sgrnas');
+        const cutSiteInput = document.getElementById('cut-site');
+        const scoreCutoffInput = document.getElementById('score-cutoff');
+
+        const sgRNAs = sgRNAsInput ? sgRNAsInput.value : '';
+        const cutSite = cutSiteInput ? parseInt(cutSiteInput.value) : -3;
+        const scoreCutoff = scoreCutoffInput ? parseFloat(scoreCutoffInput.value) : 80;
+
+        updateURL(seq1Input.value, seq2Input.value, name1Input.value, name2Input.value, sgRNAs, cutSite, scoreCutoff);
         renderAlignment(seq1Input.value, seq2Input.value, name1Input.value, name2Input.value);
+
+        // Perform sgRNA alignment if sgRNAs are provided
+        if (sgRNAs && window.performsgRNAAlignment) {
+            performsgRNAAlignment(seq1Input.value, seq2Input.value, sgRNAs, cutSite, scoreCutoff);
+        }
     }
 
     // Add input event listeners for real-time updates
@@ -426,6 +466,21 @@ function initDNAAlignment() {
     name1Input.addEventListener('input', updateAll);
     name2Input.addEventListener('input', updateAll);
 
+    // Add sgRNA input event listeners
+    const sgRNAsInput = document.getElementById('sgrnas');
+    const cutSiteInput = document.getElementById('cut-site');
+    const scoreCutoffInput = document.getElementById('score-cutoff');
+
+    if (sgRNAsInput) {
+        sgRNAsInput.addEventListener('input', updateAll);
+    }
+    if (cutSiteInput) {
+        cutSiteInput.addEventListener('input', updateAll);
+    }
+    if (scoreCutoffInput) {
+        scoreCutoffInput.addEventListener('input', updateAll);
+    }
+
     // Handle browser back/forward navigation
     window.addEventListener('hashchange', function() {
         const data = decodeSequencesFromURL();
@@ -433,7 +488,28 @@ function initDNAAlignment() {
         seq2Input.value = data.seq2;
         name1Input.value = data.name1;
         name2Input.value = data.name2;
+
+        // Update sgRNA fields
+        const sgRNAsInput = document.getElementById('sgrnas');
+        const cutSiteInput = document.getElementById('cut-site');
+        const scoreCutoffInput = document.getElementById('score-cutoff');
+
+        if (sgRNAsInput) {
+            sgRNAsInput.value = data.sgRNAs || '';
+        }
+        if (cutSiteInput) {
+            cutSiteInput.value = data.cutSite;
+        }
+        if (scoreCutoffInput) {
+            scoreCutoffInput.value = data.scoreCutoff;
+        }
+
         renderAlignment(data.seq1, data.seq2, data.name1, data.name2);
+
+        // Perform sgRNA alignment if sgRNAs are provided
+        if (data.sgRNAs && window.performsgRNAAlignment) {
+            performsgRNAAlignment(data.seq1, data.seq2, data.sgRNAs, data.cutSite, data.scoreCutoff);
+        }
     });
 
     // Setup zoom and pan
@@ -512,9 +588,23 @@ function performAlignment() {
         seq1Input.value = result.alignedSeqI;
         seq2Input.value = result.alignedSeqJ;
 
+        // Get sgRNA parameters for URL update
+        const sgRNAsInput = document.getElementById('sgrnas');
+        const cutSiteInput = document.getElementById('cut-site');
+        const scoreCutoffInput = document.getElementById('score-cutoff');
+
+        const sgRNAs = sgRNAsInput ? sgRNAsInput.value : '';
+        const cutSite = cutSiteInput ? parseInt(cutSiteInput.value) : -3;
+        const scoreCutoff = scoreCutoffInput ? parseFloat(scoreCutoffInput.value) : 80;
+
         // Update URL and render
-        updateURL(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value);
+        updateURL(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value, sgRNAs, cutSite, scoreCutoff);
         renderAlignment(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value);
+
+        // Perform sgRNA alignment if sgRNAs are provided
+        if (sgRNAs && window.performsgRNAAlignment) {
+            performsgRNAAlignment(result.alignedSeqI, result.alignedSeqJ, sgRNAs, cutSite, scoreCutoff);
+        }
 
         // Show success message
         console.log(`Alignment successful! Match: ${result.matchPercentage}%`);

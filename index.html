@@ -34,6 +34,27 @@
                 <div class="align-button-container">
                     <button id="align-button" class="align-button">Align Sequences</button>
                 </div>
+
+                <!-- sgRNA Settings -->
+                <div class="sgrna-settings">
+                    <h3>sgRNA Settings (Optional)</h3>
+                    <div class="sequence-input-group">
+                        <label for="sgrnas">sgRNA Sequences (comma-separated):</label>
+                        <textarea id="sgrnas" rows="2" placeholder="e.g., ATCGATCGATCGATCG,GCTAGCTAGCTAGCTA"></textarea>
+                    </div>
+                    <div class="sgrna-params">
+                        <div class="param-group">
+                            <label for="cut-site">Cut Site Offset:</label>
+                            <input type="number" id="cut-site" value="-3" class="param-input">
+                            <span class="param-help">Position relative to sgRNA 3' end</span>
+                        </div>
+                        <div class="param-group">
+                            <label for="score-cutoff">Score Cutoff (%):</label>
+                            <input type="number" id="score-cutoff" value="80" min="0" max="100" class="param-input">
+                            <span class="param-help">Minimum match percentage</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -51,10 +72,22 @@
                 </div>
             </div>
         </section>
+
+        <!-- sgRNA Results Sidebar -->
+        <section id="sgrna-results" class="sgrna-sidebar hidden">
+            <div class="sidebar-header">
+                <h2>sgRNA Alignment Results</h2>
+                <button id="toggle-sidebar" class="collapse-button">▼</button>
+            </div>
+            <div id="sgrna-results-content" class="sidebar-content">
+                <!-- Results will be rendered here -->
+            </div>
+        </section>
     </main>
 
     <!-- Application scripts -->
     <script src="js/alignment.js"></script>
+    <script src="js/sgrna-alignment.js"></script>
     <script src="js/dna-alignment.js"></script>
     <script src="js/main.js"></script>
 </body>
