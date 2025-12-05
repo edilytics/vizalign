@@ -77,6 +77,13 @@ function updateNavigationSlider() {
 
     contentWidth = contentElement.scrollWidth * zoomLevel;
 
+    // Add animating class if not currently dragging
+    if (!isDragging && !isSliderDragging) {
+        sliderViewport.classList.add('animating');
+    } else {
+        sliderViewport.classList.remove('animating');
+    }
+
     // If content fits entirely, center the indicator
     if (contentWidth <= containerWidth) {
         sliderViewport.style.left = '50%';
@@ -284,7 +291,7 @@ function setupZoomPan() {
         const newZoom = zoomLevel * delta;
 
         // Limit zoom range
-        if (newZoom >= 0.2 && newZoom <= 4) {
+        if (newZoom >= 0.5 && newZoom <= 4) {
             zoomLevel = newZoom;
             applyTransform();
         }
