@@ -45,6 +45,60 @@ section h2 {
     color: #2c3e50;
 }
 
+/* Section Header with Collapse Button */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.5rem;
+    margin: -0.5rem -0.5rem 1rem -0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.section-header:hover {
+    background-color: #f5f5f5;
+}
+
+.section-header h2 {
+    margin-bottom: 0;
+}
+
+.collapse-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #2c3e50;
+    transition: transform 0.3s ease;
+    user-select: none;
+}
+
+.collapse-button:hover {
+    color: #3498db;
+}
+
+.collapse-button.collapsed {
+    transform: rotate(-90deg);
+}
+
+/* Collapsible Content */
+.collapsible-content {
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    max-height: 2000px;
+    opacity: 1;
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+}
+
 /* Sequence Input Styles */
 .sequence-input-group {
     margin-bottom: 1.5rem;
@@ -151,14 +205,14 @@ section h2 {
 
 .alignment-row {
     display: flex;
-    margin-bottom: 5px;
+    margin-bottom: 1px;
     align-items: center;
 }
 
 .alignment-label {
     font-weight: 600;
     margin-right: 1rem;
-    padding: 0.5rem;
+    padding: 0;
     width: 150px;
     min-width: 150px;
     max-width: 150px;
