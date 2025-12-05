@@ -459,5 +459,74 @@ function initDNAAlignment() {
         });
     }
 
+    // Setup alignment button
+    const alignButton = document.getElementById('align-button');
+    if (alignButton) {
+        alignButton.addEventListener('click', function() {
+            performAlignment();
+        });
+    }
+
     console.log('DNA alignment tool initialized');
+}
+
+// Perform sequence alignment using the JavaScript implementation
+function performAlignment() {
+    const seq1Input = document.getElementById('seq1');
+    const seq2Input = document.getElementById('seq2');
+    const name1Input = document.getElementById('name1');
+    const name2Input = document.getElementById('name2');
+    const alignButton = document.getElementById('align-button');
+
+    // Get raw sequences (without normalization to preserve user input)
+    let seqI = seq1Input.value.toUpperCase().replace(/\s+/g, ''); // Reference
+    let seqJ = seq2Input.value.toUpperCase().replace(/\s+/g, ''); // Query
+
+    if (!seqI || !seqJ) {
+        alert('Please enter both sequences before aligning.');
+        return;
+    }
+
+    // Disable button during alignment
+    if (alignButton) {
+        alignButton.disabled = true;
+        alignButton.textContent = 'Aligning...';
+    }
+
+    try {
+        // Create scoring matrix (matches EDNAFULL defaults from Cython)
+        const matrix = makeMatrix(5, -4, -2, -1); // match, mismatch, n-mismatch, n-match
+
+        // Create gap incentive array (uniform, no special cut sites)
+        const gapIncentive = new Int32Array(seqI.length + 1);
+        gapIncentive.fill(0);
+
+        // Perform global alignment with Cython default parameters
+        // gap_open=-1, gap_extend=-1 (matches crispresso_align.pyx defaults)
+        const result = globalAlign(seqJ, seqI, matrix, gapIncentive, -1, -1);
+
+        console.log('Alignment complete:', result);
+        console.log('Match percentage:', result.matchPercentage + '%');
+
+        // Update the textareas with aligned sequences
+        seq1Input.value = result.alignedSeqI;
+        seq2Input.value = result.alignedSeqJ;
+
+        // Update URL and render
+        updateURL(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value);
+        renderAlignment(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value);
+
+        // Show success message
+        console.log(`Alignment successful! Match: ${result.matchPercentage}%`);
+
+    } catch (error) {
+        console.error('Alignment error:', error);
+        alert('Error during alignment: ' + error.message);
+    } finally {
+        // Re-enable button
+        if (alignButton) {
+            alignButton.disabled = false;
+            alignButton.textContent = 'Align Sequences';
+        }
+    }
 }
