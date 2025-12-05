@@ -79,11 +79,12 @@ function renderAlignment(seq1, seq2, name1, name2) {
     }
 
     // Use default names if not provided
-    const label1Text = name1 || 'Sequence 1';
-    const label2Text = name2 || 'Sequence 2';
+    const label1Text = name1 || 'Reference';
+    const label2Text = name2 || 'Amplicon 1';
 
     // Make sequences the same length (pad shorter one with gaps)
     const maxLength = Math.max(seq1.length, seq2.length);
+    // TODO add a warning if the lengths don't match
     seq1 = seq1.padEnd(maxLength, '-');
     seq2 = seq2.padEnd(maxLength, '-');
 
@@ -102,7 +103,6 @@ function renderAlignment(seq1, seq2, name1, name2) {
 
     const bases1 = document.createElement('div');
     bases1.style.display = 'flex';
-    bases1.style.gap = '2px';
 
     let pos1 = 0;
     for (let i = 0; i < seq1.length; i++) {
@@ -126,7 +126,6 @@ function renderAlignment(seq1, seq2, name1, name2) {
 
     const bases2 = document.createElement('div');
     bases2.style.display = 'flex';
-    bases2.style.gap = '2px';
 
     let pos2 = 0;
     for (let i = 0; i < seq2.length; i++) {
@@ -181,7 +180,7 @@ function setupZoomPan() {
         const newZoom = zoomLevel * delta;
 
         // Limit zoom range
-        if (newZoom >= 0.5 && newZoom <= 5) {
+        if (newZoom >= 0.5 && newZoom <= 10) {
             zoomLevel = newZoom;
             applyTransform();
         }
