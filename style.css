@@ -679,7 +679,7 @@ section h2 {
 /* Cut Site Markers */
 .cut-site-marker {
     position: absolute;
-    width: 3px;
+    width: 6px;
     background: #ff6b6b;
     opacity: 0.8;
     z-index: 10;

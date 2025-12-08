@@ -99,7 +99,7 @@ function findsgRNAInSequence(sgRNA, targetSeq) {
     return {
         found: bestScore > 0,
         position: bestPos,
-        positionEnd: bestPos + sgRNA.length,
+        positionEnd: bestPos + sgRNA.length - 1,
         score: bestScore,
         strand: bestStrand
     };
@@ -440,9 +440,9 @@ function addMarkerToRow(row, position, color, sgRNAIndex, seqName) {
 
     // Position the marker between bases:
     // Each base is 30px wide, so we can calculate position directly
-    // Offset by 1.5px (half of 3px marker width) to center it in the gap
+    // Offset by 3px (half of 6px marker width) to center it in the gap
     const baseWidth = 30;
-    const leftPosition = (position * baseWidth) - 1.5;
+    const leftPosition = (position * baseWidth) - 3;
 
     marker.style.left = leftPosition + 'px';
     marker.style.height = row.offsetHeight + 'px';
