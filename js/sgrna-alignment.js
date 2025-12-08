@@ -2,13 +2,13 @@
 
 // Color palette for multiple sgRNAs
 const sgRNAColors = [
-    '#ff6b6b', // Red
     '#4ecdc4', // Teal
     '#45b7d1', // Blue
     '#f7b731', // Yellow
     '#5f27cd', // Purple
     '#00d2d3', // Cyan
     '#ff9ff3', // Pink
+    '#ff6b6b', // Red
     '#54a0ff', // Light blue
 ];
 
@@ -106,12 +106,25 @@ function findsgRNAInSequence(sgRNA, targetSeq) {
 }
 
 // Calculate cut site position
+// For an sgRNA like AATGGC with cutSiteOffset=-3, cut site should be at AAT|GGC
+// Position is the index BEFORE which the cut occurs (i.e., between bases)
+// Negative offset means INSIDE the sgRNA, counting back from the 3' end
 function calculateCutSite(alignmentPos, sgRNALength, cutSiteOffset, isReverseStrand) {
+    // Convert offset to distance from 3' end
+    // Negative offset (-3) means 3 bases from 3' end INSIDE the sgRNA
+    // We need to subtract this from the length to get the position
+    const distanceFromEnd = cutSiteOffset;
+
     if (isReverseStrand) {
-        // For reverse strand, cut site is at start + abs(cutSiteOffset)
-        return alignmentPos + Math.abs(cutSiteOffset);
+        // For reverse strand (3'----5'), the 3' end is at the LEFT (start position)
+        // Cut site is distanceFromEnd bases to the RIGHT of the start
+        // Example: sgRNA at 10-25, cutSiteOffset=-3, cut at position 13
+        return alignmentPos - cutSiteOffset;
     } else {
-        // For forward strand, cut site is at end + cutSiteOffset
+        // For forward strand (5'----3'), the 3' end is at the RIGHT (end position)
+        // Cut site is distanceFromEnd bases to the LEFT of the end
+        // Example: sgRNA AATGGC at 0-5, cutSiteOffset=-3, cut at position 3
+        // Position 3 = 0 + 6 - 3 = 3 (AAT|GGC)
         return alignmentPos + sgRNALength + cutSiteOffset;
     }
 }
@@ -414,6 +427,7 @@ function addAlignmentRectangle(row, sequence, startPos, endPos, mismatches, colo
 }
 
 // Add a single cut site marker to a row
+// Position indicates the base BEFORE which the cut occurs (i.e., between bases)
 function addMarkerToRow(row, position, color, sgRNAIndex, seqName) {
     const bases = row.querySelector('div[style*="display: flex"]');
     if (!bases || !bases.children[position]) return;
@@ -422,13 +436,15 @@ function addMarkerToRow(row, position, color, sgRNAIndex, seqName) {
     const marker = document.createElement('div');
     marker.className = `cut-site-marker sgrna-${sgRNAIndex % 8}`;
     marker.style.backgroundColor = color;
-    marker.title = `sgRNA ${sgRNAIndex + 1} cut site (${seqName})`;
+    marker.title = `sgRNA ${sgRNAIndex + 1} cut site (${seqName}) at position ${position}`;
 
-    // Position relative to the base element
-    const rect = baseEl.getBoundingClientRect();
-    const parentRect = bases.getBoundingClientRect();
+    // Position the marker between bases:
+    // Each base is 30px wide, so we can calculate position directly
+    // Offset by 1.5px (half of 3px marker width) to center it in the gap
+    const baseWidth = 30;
+    const leftPosition = (position * baseWidth) - 1.5;
 
-    marker.style.left = (baseEl.offsetLeft) + 'px';
+    marker.style.left = leftPosition + 'px';
     marker.style.height = row.offsetHeight + 'px';
     marker.style.top = '0px';
 
