@@ -110,11 +110,6 @@ function findsgRNAInSequence(sgRNA, targetSeq) {
 // Position is the index BEFORE which the cut occurs (i.e., between bases)
 // Negative offset means INSIDE the sgRNA, counting back from the 3' end
 function calculateCutSite(alignmentPos, sgRNALength, cutSiteOffset, isReverseStrand) {
-    // Convert offset to distance from 3' end
-    // Negative offset (-3) means 3 bases from 3' end INSIDE the sgRNA
-    // We need to subtract this from the length to get the position
-    const distanceFromEnd = cutSiteOffset;
-
     if (isReverseStrand) {
         // For reverse strand (3'----5'), the 3' end is at the LEFT (start position)
         // Cut site is distanceFromEnd bases to the RIGHT of the start
@@ -271,7 +266,7 @@ function rendersgRNASidebar(results) {
                     <span class="match-position">pos ${m.position}-${m.positionEnd}</span>
                     <span class="match-strand">(${m.strand})</span>
                 </div>
-                <div class="match-info">Cut site: ${m.cutSite}</div>
+                <div class="match-info">Cut site: ${m.cutSite - 1}</div>
                 ${!m.passes ? `<div class="match-warning">${statusText}</div>` : ''}
             `;
         } else {
@@ -299,7 +294,7 @@ function rendersgRNASidebar(results) {
                     <span class="match-position">pos ${m.position}-${m.positionEnd}</span>
                     <span class="match-strand">(${m.strand})</span>
                 </div>
-                <div class="match-info">Cut site: ${m.cutSite}</div>
+                <div class="match-info">Cut site: ${m.cutSite - 1}</div>
                 ${!m.passes ? `<div class="match-warning">${statusText}</div>` : ''}
             `;
         } else {
