@@ -294,7 +294,7 @@ function createBaseElement(base, oppositeBase, position) {
 function setupZoomPan() {
     const container = document.getElementById('alignment-container');
 
-    // Mouse wheel zoom
+    // Mouse wheel zoom - zoom centered on mouse position
     container.addEventListener('wheel', function(e) {
         e.preventDefault();
 
@@ -303,7 +303,22 @@ function setupZoomPan() {
 
         // Limit zoom range
         if (newZoom >= 0.5 && newZoom <= 4) {
+            // Get mouse position relative to container
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            // Calculate the point in content space before zoom
+            const contentX = (mouseX - panX) / zoomLevel;
+            const contentY = (mouseY - panY) / zoomLevel;
+
+            // Apply new zoom
             zoomLevel = newZoom;
+
+            // Adjust pan to keep the same content point under the mouse
+            panX = mouseX - (contentX * zoomLevel);
+            panY = mouseY - (contentY * zoomLevel);
+
             applyTransform();
         }
     }, { passive: false });
