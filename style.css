@@ -226,6 +226,198 @@ section h2 {
     font-style: italic;
 }
 
+/* Annotations Settings */
+.annotations-settings {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.annotations-settings h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.annotations-list {
+    margin-bottom: 1rem;
+}
+
+.annotation-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+}
+
+.annotation-item:last-child {
+    margin-bottom: 0;
+}
+
+.annotation-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+}
+
+.annotation-badge.seq1 {
+    background: #8e44ad;
+}
+
+.annotation-badge.seq2 {
+    background: #e67e22;
+}
+
+.annotation-range {
+    font-family: 'Courier New', 'Monaco', monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.annotation-content {
+    flex: 1;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.annotation-delete {
+    padding: 0.25rem 0.5rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.annotation-delete:hover {
+    background: #e74c3c;
+    border-color: #e74c3c;
+    color: white;
+}
+
+.annotation-add {
+    margin-top: 0.75rem;
+}
+
+.annotation-inputs {
+    display: grid;
+    grid-template-columns: 120px 80px 80px 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.annotation-select,
+.annotation-input {
+    padding: 0.5rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+    background: var(--bg-primary);
+    transition: all 0.2s ease;
+}
+
+.annotation-select:focus,
+.annotation-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.annotation-text-input {
+    min-width: 200px;
+}
+
+.add-annotation-button {
+    padding: 0.5rem 1rem;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.add-annotation-button:hover {
+    background: #3a7bc8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+.add-annotation-button:active {
+    transform: translateY(0);
+}
+
+/* Annotation Markers in Visualization */
+.annotation-marker {
+    position: absolute;
+    height: 10px;
+    border-radius: 4px;
+    z-index: 4;
+    pointer-events: all;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+}
+
+.annotation-marker.seq1 {
+    background: #8e44ad;
+    top: -15px;
+}
+
+.annotation-marker.seq2 {
+    background: #e67e22;
+    bottom: -15px;
+}
+
+.annotation-marker:hover {
+    opacity: 1;
+    height: 12px;
+}
+
+.annotation-label {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.annotation-marker:hover .annotation-label {
+    opacity: 1;
+}
+
+.annotation-label.seq1 {
+    top: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.annotation-label.seq2 {
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
 .sequence-input-group label {
     display: block;
     margin-bottom: 0.5rem;

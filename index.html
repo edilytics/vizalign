@@ -55,6 +55,26 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Annotations -->
+                <div class="annotations-settings">
+                    <h3>Annotations (Optional)</h3>
+                    <div id="annotations-list" class="annotations-list">
+                        <!-- Annotations will be rendered here -->
+                    </div>
+                    <div class="annotation-add">
+                        <div class="annotation-inputs">
+                            <select id="annotation-seq" class="annotation-select">
+                                <option value="seq1">Reference</option>
+                                <option value="seq2">Amplicon 1</option>
+                            </select>
+                            <input type="number" id="annotation-start" placeholder="Start" min="0" class="annotation-input">
+                            <input type="number" id="annotation-end" placeholder="End" min="0" class="annotation-input">
+                            <input type="text" id="annotation-text" placeholder="Annotation text" class="annotation-input annotation-text-input">
+                            <button id="add-annotation" class="add-annotation-button">Add</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -88,6 +108,7 @@
     <!-- Application scripts -->
     <script src="js/alignment.js"></script>
     <script src="js/sgrna-alignment.js"></script>
+    <script src="js/annotations.js"></script>
     <script src="js/dna-alignment.js"></script>
     <script src="js/main.js"></script>
 </body>

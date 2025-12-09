@@ -18,7 +18,7 @@ let sliderDragStartX = 0;
 let sliderDragStartPanX = 0;
 
 // URL encoding/decoding functions
-function encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff) {
+function encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff, annotations) {
     const params = new URLSearchParams();
     if (seq1) params.set('seq1', seq1);
     if (seq2) params.set('seq2', seq2);
@@ -27,6 +27,10 @@ function encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCu
     if (sgRNAs) params.set('sgRNAs', sgRNAs);
     if (cutSite !== undefined && cutSite !== null) params.set('cutSite', cutSite);
     if (scoreCutoff !== undefined && scoreCutoff !== null) params.set('scoreCutoff', scoreCutoff);
+    if (annotations && annotations.length > 0) {
+        const encoded = window.encodeAnnotationsToURL ? window.encodeAnnotationsToURL(annotations) : '';
+        if (encoded) params.set('annotations', encoded);
+    }
     return params.toString();
 }
 
@@ -40,12 +44,13 @@ function decodeSequencesFromURL() {
         name2: params.get('name2') || '',
         sgRNAs: params.get('sgRNAs') || '',
         cutSite: params.get('cutSite') !== null ? parseInt(params.get('cutSite')) : -3,
-        scoreCutoff: params.get('scoreCutoff') !== null ? parseFloat(params.get('scoreCutoff')) : 80
+        scoreCutoff: params.get('scoreCutoff') !== null ? parseFloat(params.get('scoreCutoff')) : 80,
+        annotations: params.get('annotations') || ''
     };
 }
 
-function updateURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff) {
-    const encoded = encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff);
+function updateURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff, annotations) {
+    const encoded = encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff, annotations);
     if (encoded) {
         window.location.hash = encoded;
     } else {
@@ -433,12 +438,27 @@ function initDNAAlignment() {
             scoreCutoffInput.value = data.scoreCutoff;
         }
 
+        // Load annotations from URL
+        if (data.annotations && window.loadAnnotationsFromURL) {
+            loadAnnotationsFromURL(data.annotations);
+        }
+
         renderAlignment(data.seq1, data.seq2, data.name1, data.name2);
 
         // Perform sgRNA alignment if sgRNAs are provided
         if (data.sgRNAs && window.performsgRNAAlignment) {
             performsgRNAAlignment(data.seq1, data.seq2, data.sgRNAs, data.cutSite, data.scoreCutoff);
         }
+
+        // Render annotations if available
+        if (window.renderAnnotationMarkers) {
+            renderAnnotationMarkers(data.seq1, data.seq2);
+        }
+    }
+
+    // Initialize annotations system
+    if (window.initAnnotations) {
+        initAnnotations();
     }
 
     // Function to update everything
@@ -451,12 +471,17 @@ function initDNAAlignment() {
         const cutSite = cutSiteInput ? parseInt(cutSiteInput.value) : -3;
         const scoreCutoff = scoreCutoffInput ? parseFloat(scoreCutoffInput.value) : 80;
 
-        updateURL(seq1Input.value, seq2Input.value, name1Input.value, name2Input.value, sgRNAs, cutSite, scoreCutoff);
+        updateURL(seq1Input.value, seq2Input.value, name1Input.value, name2Input.value, sgRNAs, cutSite, scoreCutoff, window.annotations || []);
         renderAlignment(seq1Input.value, seq2Input.value, name1Input.value, name2Input.value);
 
         // Perform sgRNA alignment if sgRNAs are provided
         if (sgRNAs && window.performsgRNAAlignment) {
             performsgRNAAlignment(seq1Input.value, seq2Input.value, sgRNAs, cutSite, scoreCutoff);
+        }
+
+        // Render annotations if available
+        if (window.renderAnnotationMarkers) {
+            renderAnnotationMarkers(seq1Input.value, seq2Input.value);
         }
     }
 
@@ -504,11 +529,21 @@ function initDNAAlignment() {
             scoreCutoffInput.value = data.scoreCutoff;
         }
 
+        // Load annotations from URL
+        if (data.annotations && window.loadAnnotationsFromURL) {
+            loadAnnotationsFromURL(data.annotations);
+        }
+
         renderAlignment(data.seq1, data.seq2, data.name1, data.name2);
 
         // Perform sgRNA alignment if sgRNAs are provided
         if (data.sgRNAs && window.performsgRNAAlignment) {
             performsgRNAAlignment(data.seq1, data.seq2, data.sgRNAs, data.cutSite, data.scoreCutoff);
+        }
+
+        // Render annotations if available
+        if (window.renderAnnotationMarkers) {
+            renderAnnotationMarkers(data.seq1, data.seq2);
         }
     });
 
@@ -598,12 +633,17 @@ function performAlignment() {
         const scoreCutoff = scoreCutoffInput ? parseFloat(scoreCutoffInput.value) : 80;
 
         // Update URL and render
-        updateURL(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value, sgRNAs, cutSite, scoreCutoff);
+        updateURL(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value, sgRNAs, cutSite, scoreCutoff, window.annotations || []);
         renderAlignment(result.alignedSeqI, result.alignedSeqJ, name1Input.value, name2Input.value);
 
         // Perform sgRNA alignment if sgRNAs are provided
         if (sgRNAs && window.performsgRNAAlignment) {
             performsgRNAAlignment(result.alignedSeqI, result.alignedSeqJ, sgRNAs, cutSite, scoreCutoff);
+        }
+
+        // Render annotations if available
+        if (window.renderAnnotationMarkers) {
+            renderAnnotationMarkers(result.alignedSeqI, result.alignedSeqJ);
         }
 
         // Show success message
