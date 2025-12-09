@@ -663,14 +663,41 @@ section h2 {
 
 #slider-viewport {
     position: absolute;
-    height: 20px;
-    width: 20px;
+    height: 30px;
+    width: 6px;
     background: var(--primary-color);
-    border-radius: 999px;
+    border-radius: 3px;
     cursor: grab;
-    transform: translate(-50%, -6px);
+    transform: translate(-50%, -11px);
     transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Left arrow */
+#slider-viewport::before {
+    content: '◄';
+    position: absolute;
+    left: -14px;
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: bold;
+    transition: color 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+}
+
+/* Right arrow */
+#slider-viewport::after {
+    content: '►';
+    position: absolute;
+    right: -14px;
+    color: var(--primary-color);
+    font-size: 12px;
+    font-weight: bold;
+    transition: color 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
 }
 
 #slider-viewport.animating {
@@ -679,14 +706,32 @@ section h2 {
 
 #slider-viewport:hover {
     background: var(--primary-hover);
-    transform: translate(-50%, -6px) scale(1.1);
+    transform: translate(-50%, -11px) scale(1.1);
     box-shadow: var(--shadow-lg);
+}
+
+#slider-viewport:hover::before {
+    color: var(--primary-hover);
+    transform: translateX(-2px);
+}
+
+#slider-viewport:hover::after {
+    color: var(--primary-hover);
+    transform: translateX(2px);
 }
 
 #slider-viewport:active {
     cursor: grabbing;
     background: var(--primary-active);
-    transform: translate(-50%, -6px) scale(1.05);
+    transform: translate(-50%, -11px) scale(1.05);
+}
+
+#slider-viewport:active::before {
+    color: var(--primary-active);
+}
+
+#slider-viewport:active::after {
+    color: var(--primary-active);
 }
 
 /* sgRNA Sidebar */
