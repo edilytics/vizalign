@@ -210,7 +210,9 @@ function mapPositionToAligned(position, sequence) {
         }
     }
 
-    return position; // Fallback
+    // Position not found - it's beyond the end of the sequence
+    // Return -1 to indicate invalid position
+    return -1;
 }
 
 // Render sgRNA results in sidebar
@@ -394,8 +396,10 @@ function addAlignmentRectangle(row, sequence, startPos, endPos, mismatches, colo
     rectangle.title = `sgRNA ${sgRNAIndex + 1} alignment (${seqName})`;
 
     // Calculate position and width
+    // Account for 2px border on the rectangle (with box-sizing: border-box)
+    const borderWidth = 2;
     const leftPos = firstBase.offsetLeft;
-    const width = lastBase.offsetLeft - firstBase.offsetLeft + 30; // 30px is base width
+    const width = lastBase.offsetLeft - firstBase.offsetLeft + 30 + (borderWidth * 2); // 30px is base width, add 4px for borders
 
     rectangle.style.left = leftPos + 'px';
     rectangle.style.width = width + 'px';
