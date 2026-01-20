@@ -363,34 +363,34 @@ section h2 {
 
 /* Annotation Markers in Visualization */
 .annotation-marker {
-    position: absolute;
+    position: absolute !important;
     height: 10px;
     border-radius: 4px;
-    z-index: 4;
     pointer-events: all;
     cursor: pointer;
     transition: all 0.2s ease;
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
 .annotation-marker.seq1 {
     background: #8e44ad;
-    top: -15px;
+    /* top position set inline based on stacking level */
 }
 
 .annotation-marker.seq2 {
     background: #e67e22;
-    bottom: -15px;
+    /* bottom position set inline based on stacking level */
 }
 
 .annotation-marker:hover {
     opacity: 1;
     height: 12px;
+    z-index: 50 !important;
 }
 
 .annotation-label {
     position: absolute;
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.9);
     color: white;
     padding: 0.4rem 0.6rem;
     border-radius: var(--radius-sm);
@@ -400,6 +400,8 @@ section h2 {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s ease;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
 .annotation-marker:hover .annotation-label {
@@ -407,15 +409,11 @@ section h2 {
 }
 
 .annotation-label.seq1 {
-    top: -35px;
-    left: 50%;
-    transform: translateX(-50%);
+    top: -30px;
 }
 
 .annotation-label.seq2 {
-    bottom: -35px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: -30px;
 }
 
 .sequence-input-group label {
@@ -541,11 +539,11 @@ section h2 {
 }
 
 .alignment-row:first-of-type {
-    margin-top: 30px; /* Space for sgRNA rectangle above */
+    margin-top: 45px; /* Space for sgRNA rectangle and stacked annotations above */
 }
 
 .alignment-row:nth-of-type(2) {
-    margin-bottom: 30px; /* Space for sgRNA rectangle below */
+    margin-bottom: 25px; /* Space for sgRNA rectangle and stacked annotations below */
 }
 
 .alignment-label {
@@ -891,6 +889,7 @@ section h2 {
     background: rgba(128, 128, 128, 0.3);
     border: 2px solid rgba(128, 128, 128, 0.6);
     border-radius: 3px;
+    box-sizing: border-box;
     z-index: 5;
     pointer-events: none;
     display: flex;
@@ -911,6 +910,7 @@ section h2 {
     height: 20px;
     background: rgba(231, 76, 60, 0.7);
     border: 1px solid rgba(231, 76, 60, 0.9);
+    box-sizing: border-box;
     z-index: 6;
 }
 
