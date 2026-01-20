@@ -19,19 +19,19 @@ let sliderDragStartPanX = 0;
 
 // URL encoding/decoding functions
 function encodeSequencesToURL(seq1, seq2, name1, name2, sgRNAs, cutSite, scoreCutoff, annotations) {
-    const params = new URLSearchParams();
-    if (seq1) params.set('seq1', seq1);
-    if (seq2) params.set('seq2', seq2);
-    if (name1) params.set('name1', name1);
-    if (name2) params.set('name2', name2);
-    if (sgRNAs) params.set('sgRNAs', sgRNAs);
-    if (cutSite !== undefined && cutSite !== null) params.set('cutSite', cutSite);
-    if (scoreCutoff !== undefined && scoreCutoff !== null) params.set('scoreCutoff', scoreCutoff);
+    const parts = [];
+    if (seq1) parts.push('seq1=' + encodeURIComponent(seq1));
+    if (seq2) parts.push('seq2=' + encodeURIComponent(seq2));
+    if (name1) parts.push('name1=' + encodeURIComponent(name1));
+    if (name2) parts.push('name2=' + encodeURIComponent(name2));
+    if (sgRNAs) parts.push('sgRNAs=' + encodeURIComponent(sgRNAs));
+    if (cutSite !== undefined && cutSite !== null) parts.push('cutSite=' + encodeURIComponent(cutSite));
+    if (scoreCutoff !== undefined && scoreCutoff !== null) parts.push('scoreCutoff=' + encodeURIComponent(scoreCutoff));
     if (annotations && annotations.length > 0) {
-        const encoded = window.encodeAnnotationsToURL ? window.encodeAnnotationsToURL(annotations) : '';
-        if (encoded) params.set('annotations', encoded);
+        const json = JSON.stringify(annotations);
+        parts.push('annotations=' + encodeURIComponent(json));
     }
-    return params.toString();
+    return parts.join('&');
 }
 
 function decodeSequencesFromURL() {
@@ -458,16 +458,31 @@ function initDNAAlignment() {
             loadAnnotationsFromURL(data.annotations);
         }
 
-        renderAlignment(data.seq1, data.seq2, data.name1, data.name2);
+        // Check if sequences need alignment (no gaps present)
+        const seq1Clean = data.seq1.toUpperCase().replace(/\s+/g, '');
+        const seq2Clean = data.seq2.toUpperCase().replace(/\s+/g, '');
+        const needsAlignment = seq1Clean && seq2Clean &&
+                               !seq1Clean.includes('-') && !seq2Clean.includes('-');
 
-        // Perform sgRNA alignment if sgRNAs are provided
-        if (data.sgRNAs && window.performsgRNAAlignment) {
-            performsgRNAAlignment(data.seq1, data.seq2, data.sgRNAs, data.cutSite, data.scoreCutoff);
-        }
+        if (needsAlignment) {
+            // Auto-align on page load
+            console.log('Auto-aligning sequences on page load...');
+            setTimeout(() => {
+                performAlignment();
+            }, 100);
+        } else {
+            // Already aligned, just render
+            renderAlignment(data.seq1, data.seq2, data.name1, data.name2);
 
-        // Render annotations if available
-        if (window.renderAnnotationMarkers) {
-            renderAnnotationMarkers(data.seq1, data.seq2);
+            // Perform sgRNA alignment if sgRNAs are provided
+            if (data.sgRNAs && window.performsgRNAAlignment) {
+                performsgRNAAlignment(data.seq1, data.seq2, data.sgRNAs, data.cutSite, data.scoreCutoff);
+            }
+
+            // Render annotations if available
+            if (window.renderAnnotationMarkers) {
+                renderAnnotationMarkers(data.seq1, data.seq2);
+            }
         }
     }
 
@@ -475,6 +490,9 @@ function initDNAAlignment() {
     if (window.initAnnotations) {
         initAnnotations();
     }
+
+    // Debounce timer for automatic alignment
+    let alignmentTimer = null;
 
     // Function to update everything
     function updateAll() {
@@ -500,9 +518,36 @@ function initDNAAlignment() {
         }
     }
 
-    // Add input event listeners for real-time updates
-    seq1Input.addEventListener('input', updateAll);
-    seq2Input.addEventListener('input', updateAll);
+    // Function to trigger automatic alignment with debouncing
+    function triggerAutoAlignment() {
+        // Clear any existing timer
+        if (alignmentTimer) {
+            clearTimeout(alignmentTimer);
+        }
+
+        // Set a new timer to align after 1 second of no typing
+        alignmentTimer = setTimeout(() => {
+            const seq1 = seq1Input.value.toUpperCase().replace(/\s+/g, '');
+            const seq2 = seq2Input.value.toUpperCase().replace(/\s+/g, '');
+
+            // Only auto-align if both sequences have content and no gaps
+            if (seq1 && seq2 && seq1.length > 0 && seq2.length > 0 &&
+                !seq1.includes('-') && !seq2.includes('-')) {
+                console.log('Auto-aligning sequences...');
+                performAlignment();
+            }
+        }, 1000); // Wait 1 second after user stops typing
+    }
+
+    // Add input event listeners for real-time updates and auto-alignment
+    seq1Input.addEventListener('input', function() {
+        updateAll();
+        triggerAutoAlignment();
+    });
+    seq2Input.addEventListener('input', function() {
+        updateAll();
+        triggerAutoAlignment();
+    });
     name1Input.addEventListener('input', updateAll);
     name2Input.addEventListener('input', updateAll);
 
@@ -585,15 +630,7 @@ function initDNAAlignment() {
         });
     }
 
-    // Setup alignment button
-    const alignButton = document.getElementById('align-button');
-    if (alignButton) {
-        alignButton.addEventListener('click', function() {
-            performAlignment();
-        });
-    }
-
-    console.log('DNA alignment tool initialized');
+    console.log('DNA alignment tool initialized with automatic alignment');
 }
 
 // Perform sequence alignment using the JavaScript implementation

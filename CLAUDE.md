@@ -157,7 +157,33 @@ All styles in `style.css`. Key CSS classes:
 - `.base.insertion` - Red border (box-shadow) for insertions
 - `.empty-message` - Placeholder text when no sequences entered
 
-## Testing Locally
+## Testing
+
+### Automated Unit Tests
+
+The project includes automated unit tests for the alignment algorithm:
+
+```bash
+# Run all alignment tests
+npm test
+
+# Or run directly
+node alignment.test.js
+```
+
+Features:
+- **15 comprehensive test cases** covering basic alignment, gaps, terminal gaps, special bases, and CRISPR edits
+- **Zero dependencies** - uses only Node.js built-in modules
+- **Color-coded output** - green for pass, red for fail
+- **CI/CD friendly** - exit code 0 on success, 1 on failure
+- **Fast** - completes in milliseconds
+
+Test files:
+- `alignment.test.js` - Automated command-line test suite
+- `test-alignment.html` - Visual browser-based test runner for manual inspection
+- `TESTING_ALIGNMENT.md` - Comprehensive testing documentation
+
+### Manual Testing (Browser)
 
 1. Start local server: `python -m http.server 8000`
 2. Navigate to `http://localhost:8000`
@@ -168,6 +194,8 @@ All styles in `style.css`. Key CSS classes:
    - URL updates as you type
    - Sharing URL loads the same sequences
 5. Check browser console for errors and debug logs
+
+For alignment algorithm testing, visit `http://localhost:8000/test-alignment.html`
 
 ## Adding New Features
 

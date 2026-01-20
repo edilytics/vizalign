@@ -537,3 +537,15 @@ function calculateHomology(a, b) {
 
     return score / len;
 }
+
+// Export for Node.js (ES modules)
+// These exports allow the code to work in Node.js test environments
+// while remaining fully functional in browsers (where exports are ignored)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        makeMatrix,
+        globalAlign,
+        findIndelsSubstitutions,
+        calculateHomology
+    };
+}

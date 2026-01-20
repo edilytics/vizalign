@@ -8,8 +8,8 @@ function parseAnnotationsFromURL(annotationsParam) {
     if (!annotationsParam) return [];
 
     try {
-        const decoded = decodeURIComponent(annotationsParam);
-        const parsed = JSON.parse(decoded);
+        // URLSearchParams already decodes the value
+        const parsed = JSON.parse(annotationsParam);
         return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
         console.warn('Failed to parse annotations from URL:', e);
@@ -23,7 +23,7 @@ function encodeAnnotationsToURL(annotations) {
 
     try {
         const json = JSON.stringify(annotations);
-        return encodeURIComponent(json);
+        return json; // Let URLSearchParams handle encoding
     } catch (e) {
         console.warn('Failed to encode annotations to URL:', e);
         return '';
@@ -105,6 +105,57 @@ function renderAnnotationsList() {
     });
 }
 
+// Check if two annotations overlap
+function annotationsOverlap(ann1, ann2) {
+    return !(ann1.end < ann2.start || ann2.end < ann1.start);
+}
+
+// Calculate stacking levels for overlapping annotations
+function calculateStackingLevels(annotations, seq) {
+    // Group annotations by sequence
+    const seqAnnotations = annotations
+        .map((ann, index) => ({ ...ann, originalIndex: index }))
+        .filter(ann => ann.seq === seq);
+
+    // Sort by start position
+    seqAnnotations.sort((a, b) => a.start - b.start);
+
+    // Assign levels to avoid overlaps
+    const levels = new Array(seqAnnotations.length).fill(0);
+
+    for (let i = 0; i < seqAnnotations.length; i++) {
+        let level = 0;
+        let overlaps = true;
+
+        // Keep trying levels until we find one without overlap
+        while (overlaps) {
+            overlaps = false;
+
+            // Check if this level is occupied by any previous annotation at this position
+            for (let j = 0; j < i; j++) {
+                if (levels[j] === level && annotationsOverlap(seqAnnotations[i], seqAnnotations[j])) {
+                    overlaps = true;
+                    break;
+                }
+            }
+
+            if (overlaps) {
+                level++;
+            }
+        }
+
+        levels[i] = level;
+    }
+
+    // Create a map from original index to level
+    const levelMap = {};
+    seqAnnotations.forEach((ann, i) => {
+        levelMap[ann.originalIndex] = levels[i];
+    });
+
+    return levelMap;
+}
+
 // Render annotation markers in the visualization
 function renderAnnotationMarkers(seq1, seq2) {
     console.log('renderAnnotationMarkers called', annotations.length, 'annotations');
@@ -137,32 +188,47 @@ function renderAnnotationMarkers(seq1, seq2) {
     seq1 = seq1.toUpperCase().replace(/\s+/g, '');
     seq2 = seq2.toUpperCase().replace(/\s+/g, '');
 
-    console.log('Rendering', annotations.length, 'annotation markers');
+    // Calculate stacking levels for each sequence
+    const seq1Levels = calculateStackingLevels(annotations, 'seq1');
+    const seq2Levels = calculateStackingLevels(annotations, 'seq2');
+
+    console.log('Rendering', annotations.length, 'annotation markers with stacking');
 
     annotations.forEach((ann, index) => {
         const targetRow = ann.seq === 'seq1' ? row1 : row2;
         const targetSeq = ann.seq === 'seq1' ? seq1 : seq2;
+        const level = ann.seq === 'seq1' ? (seq1Levels[index] || 0) : (seq2Levels[index] || 0);
 
-        console.log('Rendering annotation', index, ann);
-        addAnnotationMarkerToRow(targetRow, targetSeq, ann, index);
+        console.log('Rendering annotation', index, ann, 'at level', level);
+        addAnnotationMarkerToRow(targetRow, targetSeq, ann, index, level);
     });
 }
 
 // Add a single annotation marker to a row
-function addAnnotationMarkerToRow(row, sequence, annotation, index) {
+function addAnnotationMarkerToRow(row, sequence, annotation, index, level = 0) {
     const bases = row.querySelector('div[style*="display: flex"]');
     if (!bases) {
         console.warn('Bases container not found in row');
         return;
     }
 
-    console.log('Adding marker for annotation:', annotation, 'sequence length:', sequence.length);
+    console.log('Adding marker for annotation:', annotation, 'sequence length:', sequence.length, 'level:', level);
 
     // Map positions from ungapped to gapped (aligned) sequence
     const alignedStart = mapPositionToAligned(annotation.start, sequence);
     const alignedEnd = mapPositionToAligned(annotation.end, sequence);
 
     console.log('Mapped positions - start:', alignedStart, 'end:', alignedEnd);
+
+    if (alignedStart === -1) {
+        console.warn('Start position', annotation.start, 'not found in sequence');
+        return;
+    }
+
+    if (alignedEnd === -1) {
+        console.warn('End position', annotation.end, 'not found in sequence');
+        return;
+    }
 
     if (!bases.children[alignedStart]) {
         console.warn('Start position', alignedStart, 'not found in bases (total:', bases.children.length, ')');
@@ -181,21 +247,47 @@ function addAnnotationMarkerToRow(row, sequence, annotation, index) {
     const marker = document.createElement('div');
     marker.className = `annotation-marker ${annotation.seq}`;
     marker.title = annotation.text;
+    marker.setAttribute('data-level', level);
 
-    // Calculate position and width
+    // Calculate position and width using actual DOM positions
+    // This automatically accounts for gaps in the sequence
     const baseWidth = 30;
-    const leftPos = alignedStart * baseWidth;
-    const width = (alignedEnd - alignedStart + 1) * baseWidth;
+    const leftPos = firstBase.offsetLeft;
+    const width = lastBase.offsetLeft - firstBase.offsetLeft + baseWidth;
 
     marker.style.left = leftPos + 'px';
     marker.style.width = width + 'px';
 
-    console.log('Marker style - left:', leftPos, 'width:', width);
+    // Ensure marker uses absolute positioning
+    marker.style.position = 'absolute';
+    marker.style.zIndex = String(10 + level); // Higher levels on top
+
+    // Adjust vertical position based on stacking level
+    // Each level needs 14px (10px marker + 4px gap)
+    const markerHeight = 14;
+    const baseOffset = 20; // Base distance from the sequence
+
+    if (annotation.seq === 'seq1') {
+        // Stack upward for seq1 (above) - negative values
+        const topOffset = -(baseOffset + (level * markerHeight));
+        marker.style.top = `${topOffset}px`;
+        marker.style.bottom = 'auto';
+        console.log('seq1 marker top:', topOffset);
+    } else {
+        // Stack downward for seq2 (below) - negative values
+        const bottomOffset = -(baseOffset + (level * markerHeight));
+        marker.style.bottom = `${bottomOffset}px`;
+        marker.style.top = 'auto';
+        console.log('seq2 marker bottom:', bottomOffset);
+    }
+
+    console.log('Marker style - left:', leftPos, 'width:', width, 'level:', level, 'offset:', (baseOffset + (level * markerHeight)));
 
     // Create label (tooltip)
     const label = document.createElement('div');
     label.className = `annotation-label ${annotation.seq}`;
     label.textContent = annotation.text;
+
     marker.appendChild(label);
 
     // Add marker to the bases container
@@ -218,7 +310,9 @@ function mapPositionToAligned(position, sequence) {
         }
     }
 
-    return position; // Fallback
+    // Position not found - it's beyond the end of the sequence
+    // Return -1 to indicate invalid position
+    return -1;
 }
 
 // Update annotations and trigger re-render

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annotation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .pass {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .fail {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>VizAlign Annotations Test</h1>
+
+    <div id="test-results"></div>
+
+    <h2>Quick Tests</h2>
+    <button onclick="testBasicAnnotation()">Test Basic Annotation</button>
+    <button onclick="testURLEncoding()">Test URL Encoding</button>
+    <button onclick="checkConsole()">Check Console</button>
+
+    <h2>Manual Test</h2>
+    <p>1. Open the main page: <a href="http://localhost:8000">http://localhost:8000</a></p>
+    <p>2. Enter sequences: <code>ATCGATCGATCGATCGATCG</code> in both fields</p>
+    <p>3. Add annotation: Reference, 5-10, "Test annotation"</p>
+    <p>4. Open browser console (F12) and look for debug messages</p>
+
+    <h2>Debug Info</h2>
+    <pre id="debug-info"></pre>
+
+    <script>
+        function addResult(message, passed) {
+            const div = document.createElement('div');
+            div.className = 'test-result ' + (passed ? 'pass' : 'fail');
+            div.textContent = (passed ? '✓ PASS: ' : '✗ FAIL: ') + message;
+            document.getElementById('test-results').appendChild(div);
+        }
+
+        function testBasicAnnotation() {
+            const testAnnotation = {
+                seq: 'seq1',
+                start: 5,
+                end: 10,
+                text: 'Test annotation'
+            };
+
+            const json = JSON.stringify([testAnnotation]);
+            const encoded = encodeURIComponent(json);
+            const decoded = JSON.parse(decodeURIComponent(encoded));
+
+            addResult('Annotation encoding/decoding',
+                decoded[0].text === testAnnotation.text);
+        }
+
+        function testURLEncoding() {
+            const testURL = 'http://localhost:8000/#seq1=ATCG&annotations=%5B%7B%22seq%22%3A%22seq1%22%2C%22start%22%3A0%2C%22end%22%3A2%2C%22text%22%3A%22test%22%7D%5D';
+
+            try {
+                const hash = testURL.split('#')[1];
+                const params = new URLSearchParams(hash);
+                const annotations = params.get('annotations');
+                const decoded = JSON.parse(decodeURIComponent(annotations));
+
+                addResult('URL parameter parsing',
+                    decoded.length === 1 && decoded[0].text === 'test');
+            } catch (e) {
+                addResult('URL parameter parsing failed: ' + e.message, false);
+            }
+        }
+
+        function checkConsole() {
+            alert('Open the browser console (F12) and then:\n\n' +
+                  '1. Go to http://localhost:8000\n' +
+                  '2. Add an annotation\n' +
+                  '3. Look for console messages starting with:\n' +
+                  '   - "updateAnnotations called"\n' +
+                  '   - "renderAnnotationMarkers called"\n' +
+                  '   - "Adding marker for annotation"');
+        }
+
+        // Auto-run basic tests
+        window.onload = function() {
+            testBasicAnnotation();
+            testURLEncoding();
+
+            document.getElementById('debug-info').textContent =
+                'Current URL: ' + window.location.href + '\n\n' +
+                'To test annotations:\n' +
+                '1. Navigate to the main app\n' +
+                '2. Open Developer Console (F12)\n' +
+                '3. Add an annotation and watch console output';
+        };
+    </script>
+</body>
+</html>

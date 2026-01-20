@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alignment Test Suite</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            background: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case h3 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .pass {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .fail {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .pending {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        .sequence-display {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+            word-break: break-all;
+        }
+        .stats {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .summary {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border-radius: 4px;
+            min-width: 100px;
+        }
+        .stat-box.pass { background: #d4edda; }
+        .stat-box.fail { background: #f8d7da; }
+        .stat-box.pending { background: #fff3cd; }
+        .stat-number {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>DNA Sequence Alignment Test Suite</h1>
+
+    <div class="test-controls">
+        <h2>Test Controls</h2>
+        <button onclick="runAllTests()" id="run-all-btn">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <button onclick="showExpectedResults()">Show Expected Results</button>
+    </div>
+
+    <div class="summary" id="summary" style="display: none;">
+        <h2>Test Summary</h2>
+        <div class="summary-stats">
+            <div class="stat-box pass">
+                <div class="stat-number" id="pass-count">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-box fail">
+                <div class="stat-number" id="fail-count">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-box pending">
+                <div class="stat-number" id="total-count">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="test-results"></div>
+
+    <script src="js/alignment.js"></script>
+    <script>
+        const testCases = [
+            {
+                name: "Test 1: Identical Sequences",
+                seqI: "ATCGATCG",
+                seqJ: "ATCGATCG",
+                expected: {
+                    alignedI: "ATCGATCG",
+                    alignedJ: "ATCGATCG",
+                    matchPct: 100.0
+                }
+            },
+            {
+                name: "Test 2: Single Base Mismatch",
+                seqI: "ATCGATCG",
+                seqJ: "ATCTATCG",
+                expected: {
+                    alignedI: "ATCGATCG",
+                    alignedJ: "ATCTATCG",
+                    matchPct: 87.5
+                }
+            },
+            {
+                name: "Test 3: Single Base Insertion",
+                seqI: "ATCGATCG",
+                seqJ: "ATCGAATCG",
+                expected: {
+                    hasGapInI: true,
+                    lengthMatch: true,
+                    minMatchPct: 85.0
+                }
+            },
+            {
+                name: "Test 4: Single Base Deletion",
+                seqI: "ATCGATCG",
+                seqJ: "ATCGTCG",
+                expected: {
+                    hasGapInJ: true,
+                    lengthMatch: true,
+                    minMatchPct: 85.0
+                }
+            },
+            {
+                name: "Test 5: Multiple Insertions",
+                seqI: "ATCG",
+                seqJ: "AATTCCGG",
+                expected: {
+                    hasGapInI: true,
+                    lengthMatch: true,
+                    minMatchPct: 40.0
+                }
+            },
+            {
+                name: "Test 6: Consecutive Gaps",
+                seqI: "ATCGATCGATCG",
+                seqJ: "ATCGCG",
+                expected: {
+                    hasGapInJ: true,
+                    lengthMatch: true,
+                    consecutiveGaps: true
+                }
+            },
+            {
+                name: "Test 7: Terminal Gaps (Beginning)",
+                seqI: "ATCGATCG",
+                seqJ: "GATCG",
+                expected: {
+                    lengthMatch: true,
+                    minMatchPct: 50.0
+                }
+            },
+            {
+                name: "Test 8: Terminal Gaps (End)",
+                seqI: "ATCGATCG",
+                seqJ: "ATCGA",
+                expected: {
+                    lengthMatch: true,
+                    minMatchPct: 50.0
+                }
+            },
+            {
+                name: "Test 9: N (Ambiguous Base) Handling",
+                seqI: "ATCGATCG",
+                seqJ: "ATCNATCG",
+                expected: {
+                    alignedI: "ATCGATCG",
+                    alignedJ: "ATCNATCG",
+                    minMatchPct: 80.0
+                }
+            },
+            {
+                name: "Test 10: Very Short Sequences",
+                seqI: "AT",
+                seqJ: "AT",
+                expected: {
+                    alignedI: "AT",
+                    alignedJ: "AT",
+                    matchPct: 100.0
+                }
+            },
+            {
+                name: "Test 11: Completely Different Sequences",
+                seqI: "AAAAAAAAAA",
+                seqJ: "TTTTTTTTTT",
+                expected: {
+                    alignedI: "AAAAAAAAAA",
+                    alignedJ: "TTTTTTTTTT",
+                    matchPct: 0.0
+                }
+            },
+            {
+                name: "Test 12: Query Much Longer",
+                seqI: "ATCG",
+                seqJ: "ATCGATCGATCGATCG",
+                expected: {
+                    hasGapInI: true,
+                    lengthMatch: true
+                }
+            },
+            {
+                name: "Test 13: Reference Much Longer",
+                seqI: "ATCGATCGATCGATCG",
+                seqJ: "ATCG",
+                expected: {
+                    hasGapInJ: true,
+                    lengthMatch: true
+                }
+            },
+            {
+                name: "Test 14: CRISPR Deletion",
+                seqI: "ATCGATCGATCGCCCCCCCCCCCCCCCCCCCCCATCGATCGATCG",
+                seqJ: "ATCGATCGATCGCCCCCCATCGATCGATCG",
+                expected: {
+                    hasGapInJ: true,
+                    lengthMatch: true,
+                    minMatchPct: 60.0
+                }
+            },
+            {
+                name: "Test 15: CRISPR Insertion",
+                seqI: "ATCGATCGATCGATCGATCG",
+                seqJ: "ATCGATCGATCGGGGGGGGGGGGGGATCGATCG",
+                expected: {
+                    hasGapInI: true,
+                    lengthMatch: true,
+                    minMatchPct: 50.0
+                }
+            }
+        ];
+
+        let results = [];
+
+        function runAllTests() {
+            const btn = document.getElementById('run-all-btn');
+            btn.disabled = true;
+            btn.textContent = 'Running Tests...';
+
+            clearResults();
+            results = [];
+
+            testCases.forEach((testCase, index) => {
+                setTimeout(() => {
+                    runTest(testCase, index);
+                    if (index === testCases.length - 1) {
+                        btn.disabled = false;
+                        btn.textContent = 'Run All Tests';
+                        showSummary();
+                    }
+                }, index * 100);
+            });
+        }
+
+        function runTest(testCase, index) {
+            const resultsDiv = document.getElementById('test-results');
+            const testDiv = document.createElement('div');
+            testDiv.className = 'test-case';
+            testDiv.id = `test-${index}`;
+
+            try {
+                // Create scoring matrix
+                const matrix = makeMatrix(5, -4, -2, -1);
+
+                // Create gap incentive array
+                const gapIncentive = new Int32Array(testCase.seqI.length + 1);
+                gapIncentive.fill(0);
+
+                // Perform alignment
+                const startTime = performance.now();
+                const result = globalAlign(testCase.seqJ, testCase.seqI, matrix, gapIncentive, -1, -1);
+                const endTime = performance.now();
+                const duration = (endTime - startTime).toFixed(2);
+
+                // Validate results
+                const validation = validateResult(result, testCase.expected);
+
+                // Store result
+                results.push({
+                    name: testCase.name,
+                    passed: validation.passed,
+                    result: result,
+                    validation: validation,
+                    duration: duration
+                });
+
+                // Display result
+                testDiv.innerHTML = `
+                    <h3>${testCase.name}</h3>
+                    <div class="test-result ${validation.passed ? 'pass' : 'fail'}">
+                        ${validation.passed ? '✓ PASS' : '✗ FAIL'}: ${validation.message}
+                    </div>
+                    <div class="stats">
+                        <strong>Input:</strong><br>
+                        Reference: <span class="sequence-display">${testCase.seqI}</span>
+                        Query: <span class="sequence-display">${testCase.seqJ}</span>
+                    </div>
+                    <div class="stats">
+                        <strong>Output:</strong><br>
+                        Aligned Ref: <span class="sequence-display">${result.alignedSeqI}</span>
+                        Aligned Qry: <span class="sequence-display">${result.alignedSeqJ}</span>
+                        Match %: ${result.matchPercentage}%<br>
+                        Duration: ${duration}ms
+                    </div>
+                    ${validation.details ? `<div class="stats"><strong>Details:</strong><br>${validation.details}</div>` : ''}
+                `;
+
+            } catch (error) {
+                results.push({
+                    name: testCase.name,
+                    passed: false,
+                    error: error.message
+                });
+
+                testDiv.innerHTML = `
+                    <h3>${testCase.name}</h3>
+                    <div class="error">
+                        <strong>ERROR:</strong> ${error.message}
+                    </div>
+                `;
+            }
+
+            resultsDiv.appendChild(testDiv);
+        }
+
+        function validateResult(result, expected) {
+            const checks = [];
+            let passed = true;
+            let details = [];
+
+            // Check length match
+            if (result.alignedSeqI.length !== result.alignedSeqJ.length) {
+                passed = false;
+                checks.push("Aligned sequences must be same length");
+            } else {
+                details.push(`✓ Length match: ${result.alignedSeqI.length}`);
+            }
+
+            // Check for gaps in same position
+            for (let i = 0; i < result.alignedSeqI.length; i++) {
+                if (result.alignedSeqI[i] === '-' && result.alignedSeqJ[i] === '-') {
+                    passed = false;
+                    checks.push(`Gap in both sequences at position ${i}`);
+                    break;
+                }
+            }
+
+            // Check expected values
+            if (expected.alignedI && result.alignedSeqI !== expected.alignedI) {
+                passed = false;
+                checks.push(`Expected alignedI: ${expected.alignedI}, got: ${result.alignedSeqI}`);
+            }
+
+            if (expected.alignedJ && result.alignedSeqJ !== expected.alignedJ) {
+                passed = false;
+                checks.push(`Expected alignedJ: ${expected.alignedJ}, got: ${result.alignedSeqJ}`);
+            }
+
+            if (expected.matchPct !== undefined && Math.abs(result.matchPercentage - expected.matchPct) > 0.01) {
+                passed = false;
+                checks.push(`Expected match%: ${expected.matchPct}, got: ${result.matchPercentage}`);
+            }
+
+            if (expected.minMatchPct !== undefined && result.matchPercentage < expected.minMatchPct) {
+                passed = false;
+                checks.push(`Match% too low: expected >= ${expected.minMatchPct}, got: ${result.matchPercentage}`);
+            }
+
+            // Check for gaps
+            if (expected.hasGapInI && !result.alignedSeqI.includes('-')) {
+                passed = false;
+                checks.push("Expected gap in reference sequence");
+            } else if (expected.hasGapInI) {
+                details.push("✓ Gap found in reference");
+            }
+
+            if (expected.hasGapInJ && !result.alignedSeqJ.includes('-')) {
+                passed = false;
+                checks.push("Expected gap in query sequence");
+            } else if (expected.hasGapInJ) {
+                details.push("✓ Gap found in query");
+            }
+
+            // Check for consecutive gaps
+            if (expected.consecutiveGaps) {
+                const gapRuns = (result.alignedSeqJ.match(/-+/g) || []);
+                const hasLongRun = gapRuns.some(run => run.length >= 4);
+                if (!hasLongRun) {
+                    passed = false;
+                    checks.push("Expected consecutive gaps (gap extension should group gaps)");
+                } else {
+                    details.push("✓ Consecutive gaps found");
+                }
+            }
+
+            return {
+                passed: passed,
+                message: passed ? "All checks passed" : checks.join("; "),
+                details: details.join("<br>")
+            };
+        }
+
+        function showSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const passCount = results.filter(r => r.passed).length;
+            const failCount = results.filter(r => !r.passed).length;
+
+            document.getElementById('pass-count').textContent = passCount;
+            document.getElementById('fail-count').textContent = failCount;
+            document.getElementById('total-count').textContent = results.length;
+
+            summaryDiv.style.display = 'block';
+            summaryDiv.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+            results = [];
+        }
+
+        function showExpectedResults() {
+            alert('Expected results are documented in TESTING_ALIGNMENT.md\n\n' +
+                  'Key expectations:\n' +
+                  '- Aligned sequences must be same length\n' +
+                  '- No gaps in both sequences at same position\n' +
+                  '- Match percentages should match Cython implementation\n' +
+                  '- Gap penalties should group gaps together\n' +
+                  '- Terminal gaps should have reduced penalties');
+        }
+
+        // Auto-run on load
+        window.onload = function() {
+            console.log('Alignment Test Suite loaded');
+            console.log(`${testCases.length} test cases ready`);
+        };
+    </script>
+</body>
+</html>
