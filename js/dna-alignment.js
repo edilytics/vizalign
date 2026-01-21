@@ -664,9 +664,9 @@ function performAlignment() {
         const gapIncentive = new Int32Array(seqI.length + 1);
         gapIncentive.fill(0);
 
-        // Perform global alignment with Cython default parameters
-        // gap_open=-1, gap_extend=-1 (matches crispresso_align.pyx defaults)
-        const result = globalAlign(seqJ, seqI, matrix, gapIncentive, -1, -1);
+        // Perform global alignment with CRISPResso2 default parameters
+        // gap_open=-20, gap_extend=-2 (from CRISPResso2/args.json)
+        const result = globalAlign(seqJ, seqI, matrix, gapIncentive, -20, -2);
 
         console.log('Alignment complete:', result);
         console.log('Match percentage:', result.matchPercentage + '%');
